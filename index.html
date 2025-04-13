@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Optimized Mobile Inventory Tracker</title> <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* Base Styles & CSS Variables (Same as before) */
+    @property --gradient-angle { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
+    @keyframes subtle-gradient-anim { 0% { --gradient-angle: 0deg; } 100% { --gradient-angle: 360deg; } }
+    :root {
+      --bg-color: #1a1d2e; --card-bg: rgba(40, 44, 77, 0.6); --card-border: rgba(255, 255, 255, 0.1);
+      --text-primary: #f0f0f5; --text-secondary: #a0a5c9; --accent-primary: #8a9afc; --accent-secondary: #a1ecff;
+      --danger-color: #ff7b8a; --warning-color: #ffda94; --success-color: #9dffce;
+      --input-bg: rgba(255, 255, 255, 0.05); --input-border: rgba(255, 255, 255, 0.15);
+      --input-focus-border: var(--accent-primary); --table-header-bg: rgba(255, 255, 255, 0.08);
+      --table-row-bg: rgba(255, 255, 255, 0.03); --table-row-hover-bg: rgba(255, 255, 255, 0.07);
+      --button-bg: rgba(138, 154, 252, 0.2); --button-border: rgba(138, 154, 252, 0.5);
+      --button-hover-bg: rgba(138, 154, 252, 0.4); --border-radius-main: 16px;
+      --border-radius-inner: 8px; --spacing-unit: 8px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', sans-serif; background-color: var(--bg-color);
+      background-image: radial-gradient(circle at top left, rgba(138, 154, 252, 0.1), transparent 40%), radial-gradient(circle at bottom right, rgba(161, 236, 255, 0.1), transparent 40%);
+      color: var(--text-primary); padding: calc(var(--spacing-unit) * 2); line-height: 1.6; min-height: 100vh;
+    }
+    .main-container {
+      max-width: 1250px; margin: calc(var(--spacing-unit) * 2) auto; padding: calc(var(--spacing-unit) * 3);
+      background: var(--card-bg); border-radius: var(--border-radius-main); backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px); border: 1px solid var(--card-border); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); position: relative;
+    }
+     h2 {
+       text-align: center; color: #fff; margin-bottom: calc(var(--spacing-unit) * 3); font-weight: 600; font-size: 1.6em; letter-spacing: 0.5px;
+     }
+    .main-container::before {
+        content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+        background: linear-gradient(var(--gradient-angle), var(--accent-primary), var(--accent-secondary), var(--accent-primary));
+        border-top-left-radius: var(--border-radius-main); border-top-right-radius: var(--border-radius-main); animation: subtle-gradient-anim 6s linear infinite;
+    }
+    .button-container { text-align: center; margin-bottom: calc(var(--spacing-unit) * 3); }
+    table { width: 100%; border-collapse: separate; border-spacing: 0 calc(var(--spacing-unit) * 1.5); margin-bottom: calc(var(--spacing-unit) * 4); }
+    th, td { padding: calc(var(--spacing-unit) * 1.8) calc(var(--spacing-unit) * 1.5); text-align: center; border: none; background: transparent; color: var(--text-primary); vertical-align: middle; font-size: 0.95em; }
+    th { color: var(--text-secondary); font-weight: 500; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.5px; background: var(--table-header-bg); position: sticky; top: 0px; z-index: 10; }
+    thead tr:first-child th:first-child { border-top-left-radius: var(--border-radius-inner); } thead tr:first-child th:last-child { border-top-right-radius: var(--border-radius-inner); }
+    tbody tr { background: var(--table-row-bg); border-radius: var(--border-radius-inner); transition: background-color 0.2s ease-out, transform 0.2s ease-out, box-shadow 0.2s ease-out; border: 1px solid rgba(255, 255, 255, 0.05); }
+    tbody tr:hover { background: var(--table-row-hover-bg); transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); }
+    td:nth-child(2) { text-align: left; font-weight: 500; color: #fff; }
+    .drag-handle { cursor: move; font-size: 1.1em; color: var(--text-secondary); opacity: 0.7; width: 25px; padding: 12px 0; user-select: none; -webkit-user-select: none; transition: opacity 0.2s ease; }
+    tbody tr:hover .drag-handle { opacity: 1; }
+    tr.dragging { opacity: 0.4; background: var(--accent-primary); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3); color: #fff; }
+    tr.drag-over { box-shadow: 0 0 0 2px var(--accent-primary); background: var(--table-row-hover-bg); }
+    input[type="number"], input[type="text"] { width: 100%; padding: calc(var(--spacing-unit) * 1.2); border: 1px solid var(--input-border); border-radius: var(--border-radius-inner); background: var(--input-bg); text-align: center; font-size: 0.95em; box-sizing: border-box; color: var(--text-primary); -moz-appearance: textfield; transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease; }
+    input::placeholder { color: var(--text-secondary); opacity: 0.8; } input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { display: none; }
+    input:focus { outline: none; background: rgba(255, 255, 255, 0.08); border-color: var(--input-focus-border); box-shadow: 0 0 8px rgba(138, 154, 252, 0.3); }
+    input.par.par-locked { background-color: rgba(0, 0, 0, 0.1); cursor: not-allowed; border-color: rgba(255, 255, 255, 0.1); color: var(--text-secondary); }
+    .low-stock { background: rgba(255, 218, 148, 0.15); color: var(--warning-color); font-weight: 600; border-radius: 4px; display: inline-block; padding: 2px 6px; }
+    .needed { font-weight: 600; } .total-on-hand { font-weight: 500; color: var(--text-secondary); }
+    button { margin: calc(var(--spacing-unit) * 0.5) calc(var(--spacing-unit)); padding: calc(var(--spacing-unit)*1.2) calc(var(--spacing-unit)*2); font-size: 0.9em; font-weight: 500; color: var(--text-primary); border: 1px solid var(--button-border); cursor: pointer; border-radius: var(--border-radius-inner); background: var(--button-bg); transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease; backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); }
+    button:hover { background-color: var(--button-hover-bg); transform: translateY(-1px); box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); } button:active { transform: translateY(0px); }
+    #exportBtn { background-color: rgba(157, 255, 206, 0.15); border: 1px solid rgba(157, 255, 206, 0.4); color: var(--success-color); } #exportBtn:hover { background-color: rgba(157, 255, 206, 0.3); }
+    #toggleParLockBtn { background-color: rgba(255, 218, 148, 0.15); border: 1px solid rgba(255, 218, 148, 0.4); color: var(--warning-color); } #toggleParLockBtn:hover { background-color: rgba(255, 218, 148, 0.3); }
+    .add-item-form { display: flex; gap: calc(var(--spacing-unit) * 2); margin-top: calc(var(--spacing-unit) * 3); align-items: center; flex-wrap: wrap; padding: calc(var(--spacing-unit) * 2.5); background: rgba(0, 0, 0, 0.1); border-radius: var(--border-radius-inner); border: 1px solid rgba(255, 255, 255, 0.05); }
+    .add-item-form label { margin-right: var(--spacing-unit); font-weight: 500; color: var(--text-secondary); font-size: 0.9em; }
+    .add-item-form input[type="text"], .add-item-form input[type="number"] { flex-grow: 1; min-width: 120px; }
+    #addItemBtn { background-color: rgba(157, 255, 206, 0.15); border: 1px solid rgba(157, 255, 206, 0.4); color: var(--success-color); } #addItemBtn:hover { background-color: rgba(157, 255, 206, 0.3); }
+
+    /* --- Mobile Optimization --- */
+    @media (max-width: 768px) {
+        body { padding: var(--spacing-unit); }
+        .main-container { padding: calc(var(--spacing-unit) * 2); margin: var(--spacing-unit) auto; }
+        h2 { font-size: 1.4em; margin-bottom: var(--spacing-unit) * 3; }
+        table { border-spacing: 0 var(--spacing-unit); } /* Reduce spacing */
+        thead { display: none; }
+        tbody tr { display: block; border-radius: var(--border-radius-inner); margin-bottom: calc(var(--spacing-unit) * 2); box-shadow: 0 2px 10px rgba(0,0,0, 0.15); border: 1px solid var(--card-border); background: var(--table-row-bg); overflow: hidden; /* Prevent content overflow */ }
+        tbody tr:hover { transform: none; box-shadow: 0 2px 10px rgba(0,0,0, 0.15); }
+        td {
+            display: flex; /* Use Flexbox for alignment */
+            justify-content: space-between; /* Push label left, value right */
+            align-items: center; /* Vertically center */
+            width: 100%;
+            text-align: right !important; /* Ensure value aligns right */
+            padding: calc(var(--spacing-unit) * 1.5) calc(var(--spacing-unit) * 1.5); /* Consistent padding */
+            position: relative;
+            border-bottom: 1px solid var(--input-border);
+            min-height: 50px; /* Ensure minimum touch height */
+        }
+        tbody tr td:last-child { border-bottom: none; }
+
+        td::before {
+            content: attr(data-label);
+            /* Removed absolute positioning */
+            flex-basis: 45%; /* Allocate space for label */
+            padding-right: var(--spacing-unit);
+            text-align: left !important;
+            font-weight: 500;
+            color: var(--text-secondary);
+            font-size: 0.85em;
+            white-space: nowrap;
+            overflow: hidden; /* Prevent long labels breaking layout */
+            text-overflow: ellipsis;
+        }
+        td.drag-handle { display: none; }
+
+        /* Style Item Name as the "Card Header" */
+        td:nth-child(2) {
+            display: block; /* Override flex for header */
+            width: 100%; /* Full width */
+            text-align: left !important;
+            padding: calc(var(--spacing-unit) * 1.5) calc(var(--spacing-unit) * 1.5); /* Consistent padding */
+            background-color: rgba(255, 255, 255, 0.05);
+            font-weight: 600; font-size: 1.1em; /* Larger item name */
+            color: #fff;
+            border-top-left-radius: var(--border-radius-inner);
+            border-top-right-radius: var(--border-radius-inner);
+             border-bottom: 1px solid var(--input-border); /* Separator below header */
+        }
+        td:nth-child(2)::before { display: none; } /* No label for header */
+
+        /* Adjust inputs/values within the flex cells */
+        td input[type="number"],
+        td .total-on-hand,
+        td .needed {
+            flex-grow: 1; /* Allow value/input to take remaining space */
+            text-align: right; /* Align text/input value right */
+            margin-left: var(--spacing-unit); /* Add space between label and value */
+        }
+        td input[type="number"] {
+             max-width: 100px; /* Limit input width */
+             padding: var(--spacing-unit) calc(var(--spacing-unit)*0.5); /* Adjust padding */
+             font-size: 0.9em;
+        }
+        .low-stock {
+             /* Ensure highlight looks okay */
+              margin-left: auto; /* Keep it right aligned */
+              display: inline-block; /* Reset display if needed */
+              text-align: center; /* Center text within highlight */
+        }
+
+        /* Stack Add Item Form */
+        .add-item-form { flex-direction: column; align-items: stretch; gap: var(--spacing-unit) * 1.5; padding: var(--spacing-unit) * 2; }
+        .add-item-form label { margin-bottom: calc(var(--spacing-unit) * 0.5); text-align: left; }
+        .add-item-form input[type="text"], .add-item-form input[type="number"] { min-width: unset; width: 100%; }
+        #addItemBtn { width: 100%; margin-top: var(--spacing-unit); }
+
+        /* Stack main buttons */
+        .button-container { display: flex; flex-direction: column; gap: var(--spacing-unit); }
+        .button-container button { width: 100%; margin: 0; padding: calc(var(--spacing-unit) * 1.5); }
+
+    } /* End of @media query */
+
+  </style>
+</head>
+<body>
+
+  <div class="main-container">
+    <h2>Inventory Tracker</h2>
+
+    <div class="button-container">
+        <button id="toggleParLockBtn">Unlock Par</button>
+        <button id="exportBtn">Export Prep List (Needed Items)</button>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 3%;"></th> <th style="width: 25%;">Item</th>
+          <th>Walk-in</th>
+          <th>Cold Bar 1</th>
+          <th>Cold Bar 2</th>
+          <th>Freezer</th>
+          <th>Total On Hand</th>
+          <th>Par</th>
+          <th>Needed</th>
+        </tr>
+      </thead>
+      <tbody id="inventoryTable"></tbody>
+    </table>
+
+    <div class="add-item-form">
+        <label for="newItemName">Item Name:</label>
+        <input type="text" id="newItemName" placeholder="E.g., Pot Pies">
+        <label for="newItemPar">Par:</label>
+        <input type="number" id="newItemPar" min="0" step="any" placeholder="E.g., 4">
+        <button id="addItemBtn">Add Item</button>
+    </div>
+
+  </div> <script type="text/javascript">
+    document.addEventListener("DOMContentLoaded", () => {
+       const initialItems = [ /* ... (Initial items same as before) ... */
+         { name: "Pot pies", par: 4 }, { name: "German", par: 4 }, { name: "Kingswood", par: 4 }, { name: "Salmon", par: 4 }, { name: "Pork chops", par: 4 }, { name: "Swedish meatball", par: 4 }, { name: "Tator tot hotdish", par: 4 }, { name: "Escargot", par: 4 }, { name: "Steaks", par: 4 }, { name: "Seafood chowder", par: 4 }, { name: "It. Wedding", par: 4 }, { name: "French onion", par: 4 }, { name: "Basil tomato", par: 4 }, { name: "Split pea", par: 4 }, { name: "Mashed potatoes", par: 4 }, { name: "German potatoes", par: 4 }, { name: "Gravy", par: 4 }, { name: "Salmon app", par: 4 }, { name: "Salmon spread", par: 1 }, { name: "Buns", par: 2 }, { name: "Toasties bits", par: 1 }, { name: "Rcs", par: 1 }, { name: "Salsa", par: 1 }, { name: "Guacamole", par: 1 }, { name: "Horsey", par: 1 }, { name: "Basil mayo", par: 1 }, { name: "Blue cheese", par: 1 }, { name: "BLT", par: 1 }, { name: "Tarigon vinaigrette", par: 1 }, { name: "Mongolian dressing", par: 1 }, { name: "Mongolian steak sauce", par: 1 }, { name: "Balsamic", par: 1 }, { name: "Lettuce", par: 4 }, { name: "Grapes", par: 2 }, { name: "Soda cracker", par: 4 }
+       ];
+
+       // --- DOM References --- (Same as before)
+       const tableBody = document.getElementById("inventoryTable"); const toggleParLockBtn = document.getElementById("toggleParLockBtn"); const exportBtn = document.getElementById("exportBtn"); const newItemNameInput = document.getElementById("newItemName"); const newItemParInput = document.getElementById("newItemPar"); const addItemBtn = document.getElementById("addItemBtn");
+       let parLocked = true; let draggedItem = null;
+
+       // --- FUNCTIONS --- (setParLockState, updateRowCalculations, renderRow)
+       function setParLockState(locked) { const parInputs = document.querySelectorAll("#inventoryTable input.par"); parInputs.forEach(input => { input.readOnly = locked; input.classList.toggle('par-locked', locked); }); toggleParLockBtn.textContent = locked ? "Unlock Par" : "Lock Par"; parLocked = locked; }
+       function updateRowCalculations(row) { const locationInputs = row.querySelectorAll(".location-input"); const parInput = row.querySelector(".par"); const totalOnHandCell = row.querySelector(".total-on-hand"); const neededCell = row.querySelector(".needed"); if (!parInput || !totalOnHandCell || !neededCell) return; let totalOnHand = 0; locationInputs.forEach(input => { const value = parseFloat(input.value); totalOnHand += isNaN(value) ? 0 : value; }); const parValue = parInput.value; const par = parseFloat(parValue); const currentPar = isNaN(par) ? 0 : par; const needed = Math.max(0, currentPar - totalOnHand); totalOnHandCell.textContent = totalOnHand.toFixed(2); neededCell.textContent = needed.toFixed(2); neededCell.classList.toggle("low-stock", needed > 0); }
+        function renderRow(item) { const row = document.createElement("tr"); row.setAttribute('draggable', 'true'); const initialNeeded = parseFloat(item.par) || 0; row.innerHTML = `<td class="drag-handle" title="Drag to reorder" data-label="">↕</td><td data-label="Item">${item.name}</td><td data-label="Walk-in"><input type="number" min="0" step="any" placeholder="0" class="location-input walk-in"></td><td data-label="Cold Bar 1"><input type="number" min="0" step="any" placeholder="0" class="location-input cold-bar-1"></td><td data-label="Cold Bar 2"><input type="number" min="0" step="any" placeholder="0" class="location-input cold-bar-2"></td><td data-label="Freezer"><input type="number" min="0" step="any" placeholder="0" class="location-input freezer"></td><td class="total-on-hand" data-label="Total On Hand">0.00</td><td data-label="Par"><input type="number" value="${item.par}" min="0" step="any" class="par"></td><td class="needed" data-label="Needed">${initialNeeded.toFixed(2)}</td>`; tableBody.appendChild(row); const newParInput = row.querySelector(".par"); if (newParInput) { newParInput.readOnly = parLocked; newParInput.classList.toggle('par-locked', parLocked); } updateRowCalculations(row); }
+
+       // --- EVENT LISTENERS --- (Same as before: toggleParLockBtn, addItemBtn, newItemParInput keydown, Drag/Drop, input, click, keydown, exportBtn)
+       toggleParLockBtn.addEventListener("click", () => setParLockState(!parLocked));
+       addItemBtn.addEventListener("click", () => { const name = newItemNameInput.value.trim(); const parString = newItemParInput.value; const par = parseFloat(parString); if (!name) { alert("Please enter an item name."); newItemNameInput.focus(); return; } if (isNaN(par) || par < 0) { alert("Please enter a valid non-negative number for Par."); newItemParInput.focus(); return; } renderRow({ name, par }); newItemNameInput.value = ""; newItemParInput.value = ""; newItemNameInput.focus(); });
+       newItemParInput.addEventListener("keydown", (event) => { if (event.key === "Enter") addItemBtn.click(); });
+       tableBody.addEventListener('dragstart', (event) => { const handle = event.target.closest('.drag-handle'); const row = event.target.closest('tr'); if (row && handle) { draggedItem = row; setTimeout(() => draggedItem.classList.add('dragging'), 0); event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.setData('text/plain', ''); } else { event.preventDefault(); } });
+       tableBody.addEventListener('dragend', () => { if (draggedItem) { draggedItem.classList.remove('dragging'); document.querySelectorAll('#inventoryTable tr.drag-over').forEach(row => row.classList.remove('drag-over')); draggedItem = null; } });
+       tableBody.addEventListener('dragover', (event) => { event.preventDefault(); const targetRow = event.target.closest('tr'); if (!targetRow || targetRow === draggedItem) return; const currentTarget = document.querySelector('#inventoryTable tr.drag-over'); if (currentTarget && currentTarget !== targetRow) currentTarget.classList.remove('drag-over'); if (targetRow !== currentTarget) targetRow.classList.add('drag-over'); event.dataTransfer.dropEffect = 'move'; });
+       tableBody.addEventListener('dragleave', (event) => { const targetRow = event.target.closest('tr'); if (targetRow && event.relatedTarget && !targetRow.contains(event.relatedTarget)) { targetRow.classList.remove('drag-over'); } else if (targetRow && !event.relatedTarget){ targetRow.classList.remove('drag-over'); } });
+       tableBody.addEventListener('drop', (event) => { event.preventDefault(); const targetRow = event.target.closest('tr'); if (targetRow && targetRow !== draggedItem) { const rect = targetRow.getBoundingClientRect(); const midpoint = rect.top + rect.height / 2; if (event.clientY < midpoint) { tableBody.insertBefore(draggedItem, targetRow); } else { tableBody.insertBefore(draggedItem, targetRow.nextSibling); } } document.querySelectorAll('#inventoryTable tr.drag-over').forEach(row => row.classList.remove('drag-over')); if (draggedItem) { draggedItem.classList.remove('dragging'); draggedItem = null; } });
+       tableBody.addEventListener("input", (event) => { if (event.target.classList.contains("location-input") || event.target.classList.contains("par")) { const row = event.target.closest("tr"); if (row) updateRowCalculations(row); } });
+       tableBody.addEventListener("click", (event) => { /* No actions */ });
+       tableBody.addEventListener("keydown", (event) => { if (event.target.classList.contains("location-input") && event.key === "Enter") { event.preventDefault(); const currentRow = event.target.closest("tr"); if (currentRow) updateRowCalculations(currentRow); const allLocationInputs = Array.from(document.querySelectorAll(".location-input")); const currentIndex = allLocationInputs.indexOf(event.target); if (currentIndex !== -1 && currentIndex < allLocationInputs.length - 1) { allLocationInputs[currentIndex + 1].focus(); allLocationInputs[currentIndex + 1].select(); } } else if (event.key === "Enter" && event.target.closest('tbody')) { event.preventDefault(); } });
+       exportBtn.addEventListener("click", () => { const rows = document.querySelectorAll("#inventoryTable tr"); let csvContent = "Item,Walk-in,Cold Bar 1,Cold Bar 2,Freezer,Total On Hand,Par,Needed\n"; rows.forEach(row => { const neededText = row.querySelector(".needed")?.textContent || '0'; const needed = parseFloat(neededText); if (needed > 0) { const item = `"${row.cells[1]?.textContent.replace(/"/g, '""') || ''}"`; const walkIn = row.querySelector(".walk-in")?.value || '0'; const cb1 = row.querySelector(".cold-bar-1")?.value || '0'; const cb2 = row.querySelector(".cold-bar-2")?.value || '0'; const freezer = row.querySelector(".freezer")?.value || '0'; const totalOnHand = row.querySelector(".total-on-hand")?.textContent || '0'; const par = row.querySelector(".par")?.value || '0'; csvContent += `${item},${walkIn},${cb1},${cb2},${freezer},${totalOnHand},${par},${neededText}\n`; } }); const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" }); const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = "prep_list_needed.csv"; document.body.appendChild(a); a.click(); document.body.removeChild(a); });
+
+       // --- INITIALIZATION ---
+       initialItems.forEach(item => renderRow(item));
+       setParLockState(parLocked);
+
+    });
+  </script>
+</body>
+</html>
